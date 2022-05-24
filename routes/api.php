@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\PassportController;
+use App\Http\Controllers\Api\CategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,4 +26,6 @@ Route::post('/login', [PassportController::class, 'login']);
 Route::middleware(['auth:api'])->group(function () {
     Route::get('/logout', [PassportController::class, 'logout']);
     Route::get('/user', fn (Request $req) => $req->user());
+
+    Route::apiResource('category', CategoryController::class);
 });
