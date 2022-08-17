@@ -11,71 +11,75 @@ use Tests\TestCase;
 class CategoryTest extends TestCase
 {
 
-    /**
-     * A basic feature test example.
-     *
-     * @return void
-     */
-    public function test_crud_category_api()
+    public function setUp(): void
     {
+        parent::setUp();
         $this->user = Passport::actingAs(
             User::factory()->create()
         );
+    }
 
+    public function test_list_categories()
+    {
         $this->assertJsonResult($this->getJson('/api/category'), 200);
-
-        $this->assertJsonResult($this->apiCreate(), 201);
-
-        $this->assertJsonResult($this->apiUpdate(), 200);
-
-        $this->assertJsonResult($this->apiDelete(), 200);
-
-        $this->assertJsonFailed($this->apiCreateFailedValidate(), 422)
-            ->assertJsonValidationErrorFor('name');
-
-        $this->assertJsonFailed($this->apiUpdateFailedValidate(), 422)
-            ->assertJsonValidationErrorFor('name');
     }
 
-    private function apiCreate()
+    public function test_can_create_category()
     {
-        return $this->postJson('/api/category', [
-            'name' => 'Test Category 1',
-            'slug' => 'test-category-1',
-            'description' => 'Test Category 1 - create'
-        ]);
+        $this->assertJsonResult(
+            $this->postJson('/api/category', [
+                'name' => 'Test Category 1',
+                'slug' => 'test-category-1',
+                'description' => 'Test Category 1 - create'
+            ]),
+            201
+        );
     }
 
-    private function apiUpdate()
+    public function test_can_update_category()
     {
-        return $this->patchJson('/api/category/1', [
-            'name' => 'Test Category 1',
-            'slug' => 'test-category-1',
-            'description' => 'Test Category 1 - update'
-        ]);
+        $this->assertJsonResult(
+            $this->patchJson('/api/category/1', [
+                'name' => 'Test Category 1',
+                'slug' => 'test-category-1',
+                'description' => 'Test Category 1 - update'
+            ]),
+            200
+        );
     }
 
-    private function apiDelete()
+    public function test_can_delete_category()
     {
-        return $this->deleteJson('/api/category/1');
+        $this->assertJsonResult($this->deleteJson('/api/category/1'), 200);
     }
 
-    private function apiCreateFailedValidate()
+    public function test_create_with_failed_validate()
     {
-        return $this->postJson('/api/category', [
-            'name1' => 'Test Category 2',
-            'slug1' => 'test-category-2',
-            'description' => 'Test Category 2'
-        ]);
+        $this->assertJsonFailed(
+            $this->postJson('/api/category', [
+                'name1' => 'Test Category 2',
+                'slug1' => 'test-category-2',
+                'description' => 'Test Category 2'
+            ]),
+            422
+        )->assertJsonValidationErrorFor('name');
     }
 
-    private function apiUpdateFailedValidate()
+    public function test_update_with_failed_validate()
     {
-        return $this->patchJson('/api/category/1', [
-            'name1' => 'Test Category 2',
-            'slug1' => 'test-category-2',
-            'description' => 'Test Category 2'
-        ]);
+        $this->assertJsonFailed(
+            $this->patchJson('/api/category/1', [
+                'name1' => 'Test Category 2',
+                'slug1' => 'test-category-2',
+                'description' => 'Test Category 2'
+            ]),
+            422
+        )->assertJsonValidationErrorFor('name');
+    }
+
+    public function test_delete_with_not_found_category()
+    {
+        $this->assertJsonFailed($this->deleteJson('/api/category/10000'), 404);
     }
 
 }

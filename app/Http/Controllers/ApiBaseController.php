@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-abstract class ApiBaseController extends Controller {
+abstract class ApiBaseController extends Controller
+{
 
-    public function sendJson($data, $message = '', $status = 200) {
+    public function sendJson($data, $message = '', $status = 200)
+    {
         return response()->json([
             'data' => $data,
             'errors' => null,
@@ -12,7 +14,9 @@ abstract class ApiBaseController extends Controller {
         ], $status);
     }
 
-    public function sendError($error, $message = '', $status = 500) {
+    public function sendError($error, $message = '', $status = 500)
+    {
+        dump($error);
         return response()->json([
             'data' => null,
             'errors' => $error,

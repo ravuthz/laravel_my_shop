@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Contracts\Queue\EntityNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -16,7 +17,8 @@ abstract class ApiCrudController extends ApiBaseController
     protected function getTitle($template = '')
     {
         if (!$this->title) {
-            $this->title = (new \ReflectionClass($this->model()))->getShortName();
+//            $this->title = (new \ReflectionClass($this->model()))->getShortName();
+            $this->title = class_basename($this->model());
         }
         return Str::of($template)->replace(':name', $this->title)->lower()->ucfirst();
     }
@@ -39,13 +41,13 @@ abstract class ApiCrudController extends ApiBaseController
         return $this->model;
     }
 
-    protected function listItem($model, $request)
+    protected function findAll($model, $request)
     {
-        $size = $request->get('size', 1);
+        $size = $request->get('size', 10);
         return $model->paginate($size);
     }
 
-    protected function showItem($model, $id)
+    protected function findOne($model, $id)
     {
         return $model->find($id);
     }
@@ -59,30 +61,22 @@ abstract class ApiCrudController extends ApiBaseController
         return $model;
     }
 
-    // Can be override
     protected function deleteItem($model)
     {
         $model->delete();
         return null;
     }
 
-    /**
-     *
-     * Controller Actions below
-     *
-     */
     public function index(Request $request)
     {
-        $data = $this->listItem($this->model(), $request);
+        $data = $this->findAll($this->model(), $request);
         return $this->sendJson($data, $this->getTitle('The :name fetched successfully.'));
     }
 
     public function show($id)
     {
-        $data = $this->showItem($this->model(), $id);
-        if (!$data) {
-            return abort($this->sendError(null, $this->getTitle('The :name was not found'), 404));
-        }
+        $data = $this->findOne($this->model(), $id);
+        $this->checkItemAbortIfNotFound($data, $id);
         return $this->sendJson($data, $this->getTitle('The :name fetched successfully.'));
     }
 
@@ -100,11 +94,20 @@ abstract class ApiCrudController extends ApiBaseController
 
     public function destroy($id)
     {
-        $data = $this->showItem($this->model(), $id);
-        if (!$data) {
-            return abort($this->sendError(null, $this->getTitle('The :name was not found'), 404));
-        }
+        $data = $this->findOne($this->model(), $id);
+        $this->checkItemAbortIfNotFound($data, $id);
         return $this->sendJson($this->deleteItem($data), $this->getTitle('The :name deleted successfully.'));
+    }
+
+    protected function checkItemAbortIfNotFound($item, $id = null)
+    {
+        if (!$item) {
+            return abort($this->sendError(
+                new EntityNotFoundException($this->getTitle(':name'), $id),
+                $this->getTitle('The :name was not found'), 404)
+            );
+        }
+        return null;
     }
 
 }
